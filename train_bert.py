@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader, Dataset
 from torch.optim import AdamW
 import torch
 import pandas as pd
+from tqdm import tqdm
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device:", device)
@@ -62,7 +63,7 @@ optimizer = AdamW(model.parameters(), lr=1e-5)
 # Fine-tuning loop
 for epoch in range(3):  # Number of training epochs
     print(epoch)
-    for batch in loader:
+    for batch in tqdm(loader):
         # Extract inputs
         ids = batch['ids'].to(device)
         mask = batch['mask'].to(device)
