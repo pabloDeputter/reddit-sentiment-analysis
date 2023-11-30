@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reddit Post Details</title>
+    <style>
+        /* Your CSS goes here */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+
+        nav ul {
+            list-style: none;
+            background-color: #333;
+            text-align: center;
+            padding: 0;
+            margin: 0;
+        }
+
+        nav ul li {
+            display: inline;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: white;
+            padding: 15px 20px;
+            display: inline-block;
+        }
+
+        #posts {
+            margin: 20px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+        }
+
+        #newPostForm {
+            margin: 20px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+        }
+
+        #newPostForm input, #newPostForm textarea {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <!-- Add other navigation items here -->
+        </ul>
+    </nav>
+
+    <div id="posts">
+        <!-- Assuming you pass a post variable to the template -->
+        <h2>{{ post.title }}</h2>
+        <p>{{ post.selftext }}</p>
+        <p><strong>Sentiment:</strong> {{ post.sentiment }}</p>
+        <p><strong>Political Orientation:</strong> {{ post.political_orientation }}</p>
+
+        <h3>Comments:</h3>
+        <ul>
+            {% for comment in post.comments %}
+                <li>{{ comment }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>

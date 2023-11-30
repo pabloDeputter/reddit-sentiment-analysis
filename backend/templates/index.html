@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<nav>
+    <ul>
+        <li><a href="/">Home</a></li>
+        <!-- Add more navigation items here -->
+    </ul>
+</nav>
+
+<form id="filterForm" class="filter-form">
+    <div class="selector-container">
+        <label for="subredditDropdown">Choose a subreddit:</label>
+        <select id="subredditDropdown" name="subreddit">
+            <option value="all">All</option>
+            <option value="news">News</option>
+            <option value="sports">Sports</option>
+            <option value="entertainment">Entertainment</option>
+            <!-- Add other subreddits here -->
+        </select>
+    </div>
+
+    <div class="selector-container">
+        <label for="categoryDropdown">Choose a category:</label>
+        <select id="categoryDropdown" name="category">
+            <option value="all">All</option>
+            <option value="updates">Updates</option>
+            <option value="discussions">Discussions</option>
+            <option value="questions">Questions</option>
+            <!-- Add other categories here -->
+        </select>
+    </div>
+
+    <button type="button" onclick="fetchFilteredPosts()">Submit</button>
+</form>
+
+<section id="posts">
+
+    <!-- The post list will be injected here by JavaScript -->
+</section>
+{% endblock %}
