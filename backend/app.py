@@ -7,6 +7,7 @@ import dotenv
 import torch
 import pandas as pd
 import numpy as np
+from torch.utils.data import Dataset
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer
 
 
@@ -25,7 +26,7 @@ model = AutoModelForSequenceClassification.from_pretrained(model_name)
 trainer = Trainer(model=model)
 
 # Create class for data preparation
-class Posts:
+class Posts(Dataset):
     def __init__(self, tokenized_texts):
         self.tokenized_texts = tokenized_texts
 
@@ -45,7 +46,7 @@ def index():
 # def post():
 #     pass
 
-@app.route('/back_posts')
+@app.route('/api/posts')
 def get_posts():
     category = request.args.get('category', 'all')
 
@@ -54,6 +55,15 @@ def get_posts():
         {'title': 'Second Post', 'content': 'This is the second post.'},
         {'title': 'Third Post', 'content': "I'm fucking disgusted and mad with this fucking bullshit"},
         {'title': 'I AM SO MAD!!!', 'content': 'I AM SO MAD'},
+        {'title': 'I AM SO MAD!!!', 'content': '''My Girlfriend's (F32) parents are blaming me (M28) for her suicide and I've started to feel like maybe its my fault.
+TW Self Harm
+Trigger warning: Suicide
+
+I'm in a really bad frame of mind right now and everything in my head just feels like a haze but I'd try my best to explain what happened.
+
+I met my girlfriend a few years after I finished med school. I didn't know many people in the locality back then as I had just shifted. So I joined a gardening group on the weekends which she was a part of. We came from very different backgrounds but we hit off almost instantly. However, it took over a year of being friends before we decided to be together. Just one random evening when we were sipping coffee at my place, she just looked dead in my eyes and said, "I think I love you". I've repeated that moment in my head every night and it still makes me cry.
+
+The first few months were the best time of my life. We were both shy people individually, but together, we were just wild. We went to karaoke bars and long road trips on weekends to unknown towns. We lived in motels and drunk under the stars. We went rock climbing (which none of us had done before and got so exhausted in the first half an hour). Every month we'd save up money to go to a new fancy restaurant and try a new cuisine. I thought we'd travel the world someday. We had a list of places we'd go, experiences we'd share. On our first anniversary, I made her a catalogue of all our photos with tiny sticky notes about the moment they were taken, along with a wonderful set of plants. They are still in our balcony. She took so much care of them.'''},
         # More posts...
     ]
 
@@ -65,42 +75,13 @@ def get_posts():
     # Run predictions
     predictions = trainer.predict(pred_dataset)
 
-    # Transform predictions to labels
-    preds = predictions.predictions.argmax(-1)
-    labels = pd.Series(preds).map(model.config.id2label)
-    scores = (np.exp(predictions[0]) / np.exp(predictions[0]).sum(-1, keepdims=True)).max(1)
-
-    print((np.exp(predictions[0]) / np.exp(predictions[0]).sum(-1, keepdims=True)))
-
     # scores raw
     temp = (np.exp(predictions[0]) / np.exp(predictions[0]).sum(-1, keepdims=True))
 
-    # work in progress
-    # container
-    anger = []
-    disgust = []
-    fear = []
-    joy = []
-    neutral = []
-    sadness = []
-    surprise = []
+    result = [[{'label': label, 'score': float(score)} for label, score in zip(model.config.id2label.values(), scores)] for scores in temp]
 
-    # extract scores (as many entries as exist in pred_texts)
-    for i in range(len(pred_texts)):
-        anger.append(temp[i][0])
-        disgust.append(temp[i][1])
-        fear.append(temp[i][2])
-        joy.append(temp[i][3])
-        neutral.append(temp[i][4])
-        sadness.append(temp[i][5])
-        surprise.append(temp[i][6])
-
-    print(anger, disgust, fear, joy, neutral, sadness, surprise)
-
-    for post in posts:
-        print(post['content'])
-        print(classifier(post['content'][0]))
-        post['emotion'] = json.dumps(classifier(post['content'][0]))
+    for post, res in zip(posts, result):
+        post['emotion'] = json.dumps([res])
     return jsonify({'posts': posts})
 
 

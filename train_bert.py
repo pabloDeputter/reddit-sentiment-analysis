@@ -1,3 +1,4 @@
+from tqdm import tqdm
 from transformers import BertTokenizer, BertForSequenceClassification
 from torch.utils.data import DataLoader, Dataset
 from torch.optim import AdamW
@@ -54,7 +55,7 @@ model = BertForSequenceClassification.from_pretrained(model_name, num_labels=len
 
 # Create dataset
 dataset = EmotionDataset(df, tokenizer)
-loader = DataLoader(dataset, batch_size=2)
+loader = DataLoader(dataset, batch_size=64)
 
 # Optimizer
 optimizer = AdamW(model.parameters(), lr=1e-5)
@@ -62,7 +63,7 @@ optimizer = AdamW(model.parameters(), lr=1e-5)
 # Fine-tuning loop
 for epoch in range(3):  # Number of training epochs
     print(epoch)
-    for batch in loader:
+    for batch in tqdm(loader, total=6513):
         # Extract inputs
         ids = batch['ids'].to(device)
         mask = batch['mask'].to(device)
