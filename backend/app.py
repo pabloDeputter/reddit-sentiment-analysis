@@ -68,5 +68,32 @@ def get_posts():
     return jsonify({'posts': posts})
 
 
+@app.route('/api/posts/<string:query>')
+def get_new_posts(query):
+    print(query)
+    category = request.args.get('subreddit', 'all')
+
+    posts = get_dataset(category, 10)
+
+    pred_texts = [post['content'] for post in posts]
+    # Tokenize texts and create prediction data set
+    tokenized_texts = tokenizer(pred_texts, truncation=True, padding=True)
+    pred_dataset = Posts(tokenized_texts)
+
+    # Run predictions
+    predictions = trainer.predict(pred_dataset)
+
+    # scores raw
+    temp = (np.exp(predictions[0]) / np.exp(predictions[0]).sum(-1, keepdims=True))
+
+    result = [[{'label': label, 'score': float(score)} for label, score in zip(model.config.id2label.values(), scores)]
+              for scores in temp]
+
+    for post, res in zip(posts, result):
+        post['emotion'] = json.dumps([res])
+    return jsonify({'posts': posts})
+
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=8000)

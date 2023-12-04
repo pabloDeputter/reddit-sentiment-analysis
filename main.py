@@ -13,8 +13,8 @@ def main():
     subreddit = reddit.subreddit('AITAH')  # Replace 'subreddit_name' with your target subreddit
 
     # Fetch the top 10 hot posts
-    for post in subreddit.hot(limit=10):
-        print(post.title)  # Prints the title of each post
+    for post in subreddit.hot(limit=200):
+        print('TITLE:' + post.title)  # Prints the title of each post
         comments = post.comments
         for comment in comments:
             print(comment.body)

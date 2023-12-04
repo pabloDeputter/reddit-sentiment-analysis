@@ -23,7 +23,7 @@ SUBREDDIT = 'AITAH'
 LIMIT = 10
 
 alpha = 0.3
-query = "parents are blaming me"
+query = "parents over"
 k = 10
 
 
@@ -44,7 +44,7 @@ def get_dataset():
     # Fetch the top 10 hot posts
     dataset = []
     for post in subreddit.hot(limit=LIMIT):
-        dataset.append((post.title, post.selftext))
+        dataset.append({'title': post.title, 'content': post.selftext})
     return dataset
 
 
@@ -103,32 +103,82 @@ def convert_numbers(data):
 
 
 def preprocess(data):
-    data1 = convert_lower_case(data)
-    data2 = remove_unnecessary_symbols(data1)
-    data3 = remove_apostrophe(data2)
-    data4 = convert_numbers(data3)
-    data5 = remove_stop_words(data4)
-    data6 = stemming(data5)
-    data7 = remove_unnecessary_symbols(data6)
-    data8 = convert_numbers(data7)
-    return data8
+    data = convert_lower_case(data)
+    data = stemming(data)
+
+
+    data = remove_unnecessary_symbols(data)
+    data = str(data).split()
+    return data
+
+
+def get_inverted_list(dataset):
+
+    # Step 1: Tokenize the documents
+    # Convert each document to lowercase and split it into words
+    duplicate_tokens = []
+    temp_duplicate_tokens = []
+    for document in dataset:
+        #title_token = document['title'].lower() #.split()
+        #content_token = document['content'].lower() #.split()
+
+        title_token = preprocess(document['title'])
+        content_token = preprocess(document['content'])
+
+
+        duplicate_tokens.extend(title_token)
+        duplicate_tokens.extend(content_token)
+
+        temp_duplicate_tokens.append(title_token + content_token)
+
+    # Combine the tokens into a list of unique terms
+    terms = list(set(duplicate_tokens))
+
+    # Step 2: Build the inverted index
+    # Create an empty dictionary to store the inverted index
+    inverted_index = {}
+
+    # For each term, find the documents that contain it
+    for term in terms:
+        documents = []
+
+        for document in enumerate(temp_duplicate_tokens):
+            if term in document[1]:
+                documents.append(document[0])
+
+        inverted_index[term] = documents
+
+    # Step 3: Print the inverted index
+    for term, documents in inverted_index.items():
+        print(term, "->", documents)
 
 
 ######################
 # OTHER STEPS
 ######################
 dataset = get_dataset()
+temp = get_inverted_list(dataset)
+
+
+
+
+
+
+
+#####################
+
+
+
 
 N = len(dataset)
 
 processed_text = []
 processed_title = []
 for i in dataset:
-    processed_title.append(word_tokenize(str(preprocess(i[0]))))
-    processed_text.append(word_tokenize(str(preprocess(i[1]))))
+    processed_title.append(word_tokenize(str(preprocess(i['title']))))
+    processed_text.append(word_tokenize(str(preprocess(i['content']))))
 
 DF = {}
-
 for i in range(N):
     text_tokens = processed_text[i]
     title_tokens = processed_title[i]
@@ -173,7 +223,10 @@ for i in range(N):
     for token in np.unique(tokens):
         tf = counter[token] / words_count
         df = doc_freq(token)
-        idf = np.log(N / df)
+        if df == 0:
+            idf = 0
+        else:
+            idf = math.log(N / df)
         tf_idf[doc, token] = tf * idf
     doc += 1
 
@@ -189,7 +242,10 @@ for i in range(N):
     for token in np.unique(tokens):
         tf = counter[token] / words_count
         df = doc_freq(token)
-        idf = np.log(N / df)
+        if df == 0:
+            idf = 0
+        else:
+            idf = math.log(N / df)
         tf_idf_title[doc, token] = tf * idf
     doc += 1
 
@@ -220,7 +276,10 @@ def gen_vector(tokens):
     for token in np.unique(tokens):
         tf = counter[token] / words_count
         df = doc_freq(token)
-        idf = math.log(N / df)
+        if df == 0:
+            idf = 0
+        else:
+            idf = math.log(N / df)
 
         try:
             ind = total_vocab.index(token)
@@ -259,13 +318,12 @@ def get_indexes(list):
     return list_index
 
 
-def ranked_retrieval():
+def ranked_retrieval(Q, dataset, k):
     print("Query:", query)
 
     print("-" * 50)
     print("Cosine Similarity")
     print("-" * 50)
-    Q = cosine_similarity()
 
     P = get_indexes(Q)
 
@@ -280,5 +338,8 @@ def ranked_retrieval():
         print(f"    cosine similarity: {Q[P[i]]}")
 
 
+# Main Execution
+#ranked_retrieval()
 
-ranked_retrieval()
+cosine_similarities = cosine_similarity()
+ranked_retrieval(cosine_similarities, dataset, k)
