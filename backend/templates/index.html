@@ -10,22 +10,21 @@
 
 <form id="filterForm" class="filter-form">
     <div class="selector-container">
-        <label for="subredditDropdown">Choose a subreddit:</label>
-        <select id="subredditDropdown" name="subreddit">
-            <option value="all">All</option>
-            <option value="unpopularopinion">unpopularopinion</option>
-            <!-- Add other subreddits here -->
-        </select>
+        <label for="subredditInput">Enter a subreddit:</label>
+        <input type="text" id="subredditInput" name="subreddit" placeholder="e.g., unpopularopinion">
     </div>
 
     <div class="selector-container">
         <label for="categoryDropdown">Choose a category:</label>
         <select id="categoryDropdown" name="category">
             <option value="all">All</option>
-            <option value="updates">Updates</option>
-            <option value="discussions">Discussions</option>
-            <option value="questions">Questions</option>
-            <!-- Add other categories here -->
+            <option value="anger">Anger</option>
+            <option value="disgust">Disgust</option>
+            <option value="fear">Fear</option>
+            <option value="joy">Joy</option>
+            <option value="neutral">Neutral</option>
+            <option value="sadness">Sadness</option>
+            <option value="surprise">Surprise</option>
         </select>
     </div>
 

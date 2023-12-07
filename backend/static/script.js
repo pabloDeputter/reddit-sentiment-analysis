@@ -46,7 +46,7 @@ window.onload = function() {
     }
 
 function fetchFilteredPosts() {
-    const subreddit = document.getElementById('subredditDropdown').value;
+    const subreddit = document.getElementById('subredditInput').value;
     const category = document.getElementById('categoryDropdown').value;
     fetch(`/api/posts?subreddit=${subreddit}&category=${category}`)
         .then(response => response.json())

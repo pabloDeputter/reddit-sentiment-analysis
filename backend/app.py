@@ -13,7 +13,7 @@ dotenv.load_dotenv()
 app = Flask(__name__)
 
 # load tokenizer and model, create trainer
-model_name = "j-hartmann/emotion-english-distilroberta-base"
+model_name = "SamLowe/roberta-base-go_emotions"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSequenceClassification.from_pretrained(model_name)
 trainer = Trainer(model=model)
@@ -33,21 +33,12 @@ class Posts(Dataset):
 
 @app.route('/')
 def index():
-    return render_template('index.html',
-                           post={'title': 'Geert Wilders wordt premier!!', 'selftext': 'This is the first post.',
-                                 'comments': ["lol", "lollers"], 'sentiment': 4,
-                                 'political_orientation': "hard right"})
-
-
-# @app.route('/post/<post_id>')
-# def post():
-#     pass
+    return render_template('index.html')
 
 @app.route('/api/posts')
 def get_posts():
-    category = request.args.get('subreddit', 'all')
-
-    posts = get_dataset(category, 10)
+    subreddit = request.args.get('subreddit', 'all')
+    posts = get_dataset(subreddit, 10)
 
     pred_texts = [post['content'] for post in posts]
     # Tokenize texts and create prediction data set
