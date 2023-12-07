@@ -3,7 +3,14 @@
 {% block main %}
 <nav>
     <ul>
-        <li><a href="/">Home</a></li>
+        <li><a class="nav-home" href="/">Home</a></li>
+        <li>
+            <form class="search-form" onsubmit="handleSubmitSearch(event)">
+                <label for="search"></label>
+                <input id="search" class="search-input" type="text" placeholder="Search..." autofocus required>
+                <button type="submit">Go</button>
+            </form>
+        </li>
         <!-- Add more navigation items here -->
     </ul>
 </nav>
@@ -11,7 +18,7 @@
 <form id="filterForm" class="filter-form">
     <div class="selector-container">
         <label for="subredditInput">Enter a subreddit:</label>
-        <input type="text" id="subredditInput" name="subreddit" placeholder="e.g., unpopularopinion">
+        <input class="search-input" type="text" id="subredditInput" name="subreddit" placeholder="e.g., unpopularopinion">
     </div>
 
     <div class="selector-container">
@@ -32,7 +39,6 @@
 </form>
 
 <section id="posts">
-
     <!-- The post list will be injected here by JavaScript -->
 </section>
 {% endblock %}

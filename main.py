@@ -17,7 +17,10 @@ def main():
         print('TITLE:' + post.title)  # Prints the title of each post
         comments = post.comments
         for comment in comments:
-            print(comment.body)
+            try:
+                print(comment.body)
+            except:
+                pass
 
 
 if __name__ == '__main__':
