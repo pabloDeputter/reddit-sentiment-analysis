@@ -1,13 +1,9 @@
 import praw
 
-from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
-from collections import Counter
-from num2words import num2words
 
-import math
-
+from math import log
 import numpy as np
 
 ######################
@@ -20,10 +16,10 @@ USERNAME = 'def-not-bot-420'
 PASSWORD = 'IrIsCool69'
 
 SUBREDDIT = 'AITAH'
-LIMIT = 10
+LIMIT = 50
 
 alpha = 0.3
-query = "parents over"
+query = "I want to go in the doorway"
 k = 10
 
 
@@ -64,21 +60,6 @@ def remove_unnecessary_symbols(data):
     return data
 
 
-# TODO: set this in remove_unnecessary_symbols
-def remove_apostrophe(data):
-    return np.char.replace(data, "'", "")
-
-
-def remove_stop_words(data):
-    stop_words = stopwords.words('english')
-    words = word_tokenize(str(data))
-    new_text = ""
-    for w in words:
-        if w not in stop_words and len(w) > 1:
-            new_text = new_text + " " + w
-    return new_text
-
-
 def stemming(data):
     stemmer = PorterStemmer()
 
@@ -89,24 +70,9 @@ def stemming(data):
     return new_text
 
 
-def convert_numbers(data):
-    tokens = word_tokenize(str(data))
-    new_text = ""
-    for w in tokens:
-        try:
-            w = num2words(int(w))
-        except:
-            pass
-        new_text = new_text + " " + w
-    new_text = np.char.replace(new_text, "-", " ")
-    return new_text
-
-
 def preprocess(data):
     data = convert_lower_case(data)
     data = stemming(data)
-
-
     data = remove_unnecessary_symbols(data)
     data = str(data).split()
     return data
@@ -119,12 +85,8 @@ def get_inverted_list(dataset):
     duplicate_tokens = []
     temp_duplicate_tokens = []
     for document in dataset:
-        #title_token = document['title'].lower() #.split()
-        #content_token = document['content'].lower() #.split()
-
         title_token = preprocess(document['title'])
         content_token = preprocess(document['content'])
-
 
         duplicate_tokens.extend(title_token)
         duplicate_tokens.extend(content_token)
@@ -152,194 +114,65 @@ def get_inverted_list(dataset):
     for term, documents in inverted_index.items():
         print(term, "->", documents)
 
+    return inverted_index
+
 
 ######################
-# OTHER STEPS
+# PUTTING IT ALL TOGETHER
 ######################
+
+# Function to calculate TF-IDF
+def calculate_tf_idf(term, doc_id, document_dict):
+    tf = document_dict[term].count(doc_id) / len(document_dict[term])
+    idf = log(len(document_dict) / len([1 for doc_ids in document_dict.values() if doc_id in doc_ids]))
+    tf_idf = tf * idf
+    return tf_idf
+
+
+def cosine_similarity(query_tfidf, document_tfidf):
+    dot_product = np.dot(query_tfidf, document_tfidf)
+    query_norm = np.linalg.norm(query_tfidf)
+    document_norm = np.linalg.norm(document_tfidf)
+
+    # Avoid division by zero
+    denominator = query_norm * document_norm if query_norm * document_norm != 0 else 1
+
+    cos_sim = dot_product / denominator
+    return cos_sim
+
+
+# Function to rank documents based on a query
+def rank_documents(query, document_dict):
+    query_terms = query.split()
+
+    # Calculate TF-IDF for each term in the query for each document
+    document_scores = {}
+    for term in query_terms:
+        for doc_id in range(0, LIMIT):  # Assuming documents are numbered from 1 to 9
+            if doc_id not in document_scores:
+                document_scores[doc_id] = 0
+            if term in document_dict:
+                document_scores[doc_id] += calculate_tf_idf(term, doc_id, document_dict)
+
+
+    # Sort documents based on the total TF-IDF score
+    ranked_documents = sorted(document_scores.items(), key=lambda x: x[1], reverse=True)
+
+    return ranked_documents
+
+
+def ranked_retrieval(dataset, query):
+    words_set = get_inverted_list(dataset)
+    print(words_set)
+
+    # Rank documents based on the query
+    result = rank_documents(query, words_set)
+
+    # Print the ranked documents
+    print(f"Ranked Documents for Query '{query}':")
+    for doc_id, score in result:
+        print(f"Document {doc_id}: {score}")
+
+
 dataset = get_dataset()
-temp = get_inverted_list(dataset)
-
-
-
-
-
-
-
-#####################
-
-
-
-
-N = len(dataset)
-
-processed_text = []
-processed_title = []
-for i in dataset:
-    processed_title.append(word_tokenize(str(preprocess(i['title']))))
-    processed_text.append(word_tokenize(str(preprocess(i['content']))))
-
-DF = {}
-for i in range(N):
-    text_tokens = processed_text[i]
-    title_tokens = processed_title[i]
-    for w in text_tokens:
-        try:
-            DF[w].add(i)
-        except:
-            DF[w] = {i}
-
-    for w in title_tokens:
-        try:
-            DF[w].add(i)
-        except:
-            DF[w] = {i}
-for i in DF:
-    DF[i] = len(DF[i])
-
-total_vocab_size = len(DF)
-
-total_vocab = [x for x in DF]
-
-
-def doc_freq(word):
-    c = 0
-    try:
-        c = DF[word]
-    except:
-        pass
-    return c
-
-
-doc = 0
-
-tf_idf = {}
-
-for i in range(N):
-    tokens = processed_text[i]
-
-    counter = Counter(tokens + processed_title[i])
-    words_count = len(tokens + processed_title[i])
-
-    for token in np.unique(tokens):
-        tf = counter[token] / words_count
-        df = doc_freq(token)
-        if df == 0:
-            idf = 0
-        else:
-            idf = math.log(N / df)
-        tf_idf[doc, token] = tf * idf
-    doc += 1
-
-doc = 0
-
-tf_idf_title = {}
-
-for i in range(N):
-    tokens = processed_title[i]
-    counter = Counter(tokens + processed_text[i])
-    words_count = len(tokens + processed_text[i])
-
-    for token in np.unique(tokens):
-        tf = counter[token] / words_count
-        df = doc_freq(token)
-        if df == 0:
-            idf = 0
-        else:
-            idf = math.log(N / df)
-        tf_idf_title[doc, token] = tf * idf
-    doc += 1
-
-for i in tf_idf:
-    tf_idf[i] *= alpha
-
-for i in tf_idf_title:
-    tf_idf[i] = tf_idf_title[i]
-
-D = np.zeros((N, total_vocab_size))
-for i in tf_idf:
-    try:
-        ind = total_vocab.index(i[1])
-        D[i[0]][ind] = tf_idf[i]
-    except:
-        pass
-
-
-######################
-# COSINE SIMILARITY
-######################
-def gen_vector(tokens):
-    Q = np.zeros((len(total_vocab)))
-
-    counter = Counter(tokens)
-    words_count = len(tokens)
-
-    for token in np.unique(tokens):
-        tf = counter[token] / words_count
-        df = doc_freq(token)
-        if df == 0:
-            idf = 0
-        else:
-            idf = math.log(N / df)
-
-        try:
-            ind = total_vocab.index(token)
-            Q[ind] = tf * idf
-        except:
-            pass
-    return Q
-
-
-def cosine_similarity():
-    preprocessed_query = preprocess(query)
-    tokens = word_tokenize(str(preprocessed_query))
-
-    print("Tokens:", tokens)
-
-    d_cosines = []
-
-    query_vector = gen_vector(tokens)
-
-    for d in D:
-        cosine = np.dot(query_vector, d) / (np.linalg.norm(query_vector) * np.linalg.norm(d))
-        d_cosines.append(cosine)
-    return d_cosines
-
-
-def get_indexes(list):
-    list_tmp = list.copy()
-    list_sorted = list.copy()
-    list_sorted.sort()
-
-    list_index = []
-    for x in list_sorted:
-        list_index.insert(0, list_tmp.index(x))
-        list_tmp[list_tmp.index(x)] = -1
-
-    return list_index
-
-
-def ranked_retrieval(Q, dataset, k):
-    print("Query:", query)
-
-    print("-" * 50)
-    print("Cosine Similarity")
-    print("-" * 50)
-
-    P = get_indexes(Q)
-
-    print("\nCosine similarities:", Q)
-
-    print("\nindexes:", P)
-
-    for i in range(k):
-        print("")
-        print(f"Rank {i}:")
-        print(f"    title: {dataset[P[i]]}")
-        print(f"    cosine similarity: {Q[P[i]]}")
-
-
-# Main Execution
-#ranked_retrieval()
-
-cosine_similarities = cosine_similarity()
-ranked_retrieval(cosine_similarities, dataset, k)
+ranked_retrieval(dataset, query)
