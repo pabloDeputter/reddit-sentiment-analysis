@@ -19,7 +19,7 @@ SUBREDDIT = 'AITAH'
 LIMIT = 50
 
 alpha = 0.3
-query = "I want to go in the doorway"
+query = "for telling my girlfriend she needs to enforce better boundaries with her daughter regarding entering our room"
 k = 10
 
 
@@ -79,7 +79,6 @@ def preprocess(data):
 
 
 def get_inverted_list(dataset):
-
     # Step 1: Tokenize the documents
     # Convert each document to lowercase and split it into words
     duplicate_tokens = []
@@ -129,31 +128,65 @@ def calculate_tf_idf(term, doc_id, document_dict):
     return tf_idf
 
 
+def compute_query_tf(query):
+    words = query.split()
+    tf_query = {}
+    for word in words:
+        if word in tf_query:
+            tf_query[word] += 1
+        else:
+            tf_query[word] = 1
+    return tf_query
+
+
+def compute_query_tf_idf(query, N, df):
+    """
+    N is the total number of documents in your dataset.
+df is a dictionary where each key is a word and its value is the number of documents that contain that word.
+    :param query:
+    :param N:
+    :param df:
+    :return:
+    """
+    tf_query = compute_query_tf(query)
+    tf_idf_query = {}
+    for word, tf in tf_query.items():
+        idf = log(N / df.get(word, N))  # Adding N in case the word is not in df
+        tf_idf_query[word] = tf * idf
+    return tf_idf_query
+
+
 def cosine_similarity(query_tfidf, document_tfidf):
-    dot_product = np.dot(query_tfidf, document_tfidf)
-    query_norm = np.linalg.norm(query_tfidf)
-    document_norm = np.linalg.norm(document_tfidf)
+    similarities = {}
+    for doc_id, vec in document_tfidf.items():
+        dot_product = np.dot(query_tfidf, vec)
+        query_norm = np.linalg.norm(query_tfidf)
+        document_norm = np.linalg.norm(vec)
 
-    # Avoid division by zero
-    denominator = query_norm * document_norm if query_norm * document_norm != 0 else 1
+        # Avoid division by zero
+        denominator = x if (x := query_norm * document_norm) != 0 else 1
 
-    cos_sim = dot_product / denominator
-    return cos_sim
+        cos_sim = dot_product / denominator
+        similarities[doc_id] = cos_sim
+    return similarities
 
 
 # Function to rank documents based on a query
 def rank_documents(query, document_dict):
     query_terms = query.split()
 
+    query_score = compute_query_tf_idf(query, LIMIT, {key: len(value) for key, value in document_dict.items()})
+
     # Calculate TF-IDF for each term in the query for each document
     document_scores = {}
-    for term in query_terms:
+    for i, term in enumerate(query_terms):
         for doc_id in range(0, LIMIT):  # Assuming documents are numbered from 1 to 9
             if doc_id not in document_scores:
-                document_scores[doc_id] = 0
+                document_scores[doc_id] = np.zeros(len(query_terms))
             if term in document_dict:
-                document_scores[doc_id] += calculate_tf_idf(term, doc_id, document_dict)
+                document_scores[doc_id][i] = calculate_tf_idf(term, doc_id, document_dict)
 
+    document_scores = cosine_similarity(np.array(list(query_score.values())), document_scores)
 
     # Sort documents based on the total TF-IDF score
     ranked_documents = sorted(document_scores.items(), key=lambda x: x[1], reverse=True)
@@ -161,18 +194,20 @@ def rank_documents(query, document_dict):
     return ranked_documents
 
 
-def ranked_retrieval(dataset, query):
+def ranked_retrieval(dataset, query, threshhold):
     words_set = get_inverted_list(dataset)
-    print(words_set)
+    # print(words_set)
 
     # Rank documents based on the query
     result = rank_documents(query, words_set)
 
     # Print the ranked documents
-    print(f"Ranked Documents for Query '{query}':")
-    for doc_id, score in result:
-        print(f"Document {doc_id}: {score}")
+    # print(f"Ranked Documents for Query '{query}':")
+    # for doc_id, score in filter(lambda x: x[1] > threshhold, result):
+    #     print(f"Document {doc_id}: {score}")
+
+    return filter(lambda x: x[1] > threshhold, result)
 
 
 dataset = get_dataset()
-ranked_retrieval(dataset, query)
+ranked_retrieval(dataset, query, 0.5)

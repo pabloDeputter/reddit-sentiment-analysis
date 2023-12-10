@@ -35,6 +35,7 @@ class Posts(Dataset):
 def index():
     return render_template('index.html')
 
+
 @app.route('/api/posts')
 def get_posts():
     subreddit = request.args.get('subreddit', 'all')
@@ -83,7 +84,6 @@ def get_new_posts(query):
     for post, res in zip(posts, result):
         post['emotion'] = json.dumps([res])
     return jsonify({'posts': posts})
-
 
 
 if __name__ == '__main__':
