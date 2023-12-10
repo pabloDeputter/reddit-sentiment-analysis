@@ -3,6 +3,42 @@ window.onload = function () {
     fetchFilteredPosts();
 };
 
+document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('subredditInput');
+    const suggestionsContainer = document.getElementById('suggestions');
+    let debounceTimer;
+
+    input.addEventListener('input', function () {
+        clearTimeout(debounceTimer);
+        const query = input.value;
+
+        debounceTimer = setTimeout(() => {
+            if (!query) {
+                suggestionsContainer.innerHTML = '';
+                return;
+            }
+
+            fetch(`/api/subreddits?query=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    suggestionsContainer.innerHTML = '';
+                    data.forEach(subreddit => {
+                        const div = document.createElement('div');
+                        div.classList.add('suggestion-item');
+                        div.textContent = subreddit;
+                        div.onclick = function () {
+                            input.value = subreddit;
+                            suggestionsContainer.innerHTML = '';
+                        };
+                        suggestionsContainer.appendChild(div);
+                    });
+                })
+                .catch(error => console.error('Error fetching suggestions:', error));
+        }, 250); // Adjust the delay (in milliseconds) as needed
+    });
+});
+
 
 function createSentimentChart(data) {
     // Calculate the max score for scaling purposes

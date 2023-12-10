@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<nav>
+    <ul>
+        <li><a class="nav-home" href="/">Home</a></li>
+        <li>
+            <form class="search-form" onsubmit="handleSubmitSearch(event)">
+                <label for="search"></label>
+                <input id="search" class="search-input" type="text" placeholder="Search..." autofocus required>
+                <button type="submit">Go</button>
+            </form>
+        </li>
+        <!-- Add more navigation items here -->
+    </ul>
+</nav>
+
+<form id="filterForm" class="filter-form">
+    <div class="selector-container">
+        <label for="subredditInput">Enter a subreddit:</label>
+        <div class="input-wrapper">
+            <input class="search-input" type="text" id="subredditInput" name="subreddit"
+                   placeholder="e.g., unpopularopinion">
+            <div id="suggestions" class="suggestions-container"></div>
+        </div>
+    </div>
+
+    <div class="selector-container">
+        <label for="categoryDropdown">Choose a category:</label>
+        <select id="categoryDropdown" name="category">
+            <option value="all">All</option>
+            <option value="admiration">Admiration</option>
+            <option value="amusement">Amusement</option>
+            <option value="anger">Anger</option>
+            <option value="annoyance">Annoyance</option>
+            <option value="approval">Approval</option>
+            <option value="caring">Caring</option>
+            <option value="confusion">Confusion</option>
+            <option value="curiosity">Curiosity</option>
+            <option value="desire">Desire</option>
+            <option value="disappointment">Disappointment</option>
+            <option value="disapproval">Disapproval</option>
+            <option value="disgust">Disgust</option>
+            <option value="embarrassment">Embarrassment</option>
+            <option value="excitement">Excitement</option>
+            <option value="fear">Fear</option>
+            <option value="gratitude">Gratitude</option>
+            <option value="grief">Grief</option>
+            <option value="joy">Joy</option>
+            <option value="love">Love</option>
+            <option value="nervousness">Nervousness</option>
+            <option value="optimism">Optimism</option>
+            <option value="pride">Pride</option>
+            <option value="realization">Realization</option>
+            <option value="relief">Relief</option>
+            <option value="remorse">Remorse</option>
+            <option value="sadness">Sadness</option>
+            <option value="surprise">Surprise</option>
+            <option value="neutral">Neutral</option>
+        </select>
+    </div>
+
+    <button type="button" onclick="fetchFilteredPosts()">Submit</button>
+</form>
+
+<section id="posts">
+    <!-- The post list will be injected here by JavaScript -->
+</section>
+{% endblock %}

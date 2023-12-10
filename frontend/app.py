@@ -1,12 +1,11 @@
 import json
-
 import dotenv
 import numpy as np
 from flask import Flask, render_template, request, jsonify
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer
 
-from utils import get_dataset
+import src.utils as utils
 
 dotenv.load_dotenv()
 
@@ -17,6 +16,10 @@ model_name = "SamLowe/roberta-base-go_emotions"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSequenceClassification.from_pretrained(model_name)
 trainer = Trainer(model=model)
+
+# Cache
+cache_suggestions_FILE = 'data/cache_suggestions.pkl'
+cache_suggestions = utils.load_cache_from_file(cache_suggestions_FILE)
 
 
 # Create class for data preparation
@@ -39,7 +42,7 @@ def index():
 @app.route('/api/posts')
 def get_posts():
     subreddit = request.args.get('subreddit', 'all')
-    posts = get_dataset(subreddit, 10)
+    posts = utils.get_dataset(subreddit, 10)
 
     pred_texts = [post['content'] for post in posts]
     # Tokenize texts and create prediction data set
@@ -65,7 +68,7 @@ def get_new_posts(query):
     print(query)
     category = request.args.get('subreddit', 'all')
 
-    posts = get_dataset(category, 10)
+    posts = utils.get_dataset(category, 10)
 
     pred_texts = [post['content'] for post in posts]
     # Tokenize texts and create prediction data set
@@ -84,6 +87,22 @@ def get_new_posts(query):
     for post, res in zip(posts, result):
         post['emotion'] = json.dumps([res])
     return jsonify({'posts': posts})
+
+@app.route('/api/subreddits', methods=['GET'])
+def autocomplete():
+    """
+    Returns a list of subreddit suggestions based on the query parameter
+    '/api/subreddits?query=ask' -> ['askreddit', 'askscience', 'askhistorians', ...]
+    """
+    query = request.args.get('query', '')
+    if query in cache_suggestions:
+        return jsonify(cache_suggestions[query])
+    else:
+        suggestions = utils.get_subreddit_suggestions(query)
+        print(cache_suggestions)
+        cache_suggestions[query] = suggestions
+        utils.save_cache_to_file(cache_suggestions, cache_suggestions_FILE)
+        return jsonify(suggestions)
 
 
 if __name__ == '__main__':
