@@ -41,7 +41,13 @@ def index():
 
 @app.route('/api/posts')
 def get_posts():
+    """
+    Returns a list of posts from the specified subreddit.
+    subreddit: subreddit name
+    emotion: emotion name
+    """
     subreddit = request.args.get('subreddit', 'all')
+    emotion = request.args.get('emotion', 'all')
     posts = utils.get_dataset(subreddit, 10)
 
     pred_texts = [post['content'] for post in posts]
@@ -58,14 +64,32 @@ def get_posts():
     result = [[{'label': label, 'score': float(score)} for label, score in zip(model.config.id2label.values(), scores)]
               for scores in temp]
 
-    for post, res in zip(posts, result):
-        post['emotion'] = json.dumps([res])
-    return jsonify({'posts': posts})
+    # Sort by emotion score
+    if emotion != 'all':
+        def get_emotion_score(post_emotions, label):
+            for item in post_emotions:
+                if item['label'] == label:
+                    return item['score']
+            return -1  # Default score if the emotion isn't found
+
+        zipped = sorted(
+            zip(posts, result),
+            key=lambda x: get_emotion_score(x[1], emotion),
+            reverse=True
+        )
+    else:
+        zipped = zip(posts, result)
+
+    posts, emotions = zip(*zipped)
+
+    for post, emotion_scores in zip(posts, emotions):
+        post['emotion'] = json.dumps(emotion_scores)
+
+    return jsonify({'posts': list(posts)})
 
 
 @app.route('/api/posts/<string:query>')
 def get_new_posts(query):
-    print(query)
     category = request.args.get('subreddit', 'all')
 
     posts = utils.get_dataset(category, 10)
@@ -88,6 +112,7 @@ def get_new_posts(query):
         post['emotion'] = json.dumps([res])
     return jsonify({'posts': posts})
 
+
 @app.route('/api/subreddits', methods=['GET'])
 def autocomplete():
     """
@@ -99,7 +124,6 @@ def autocomplete():
         return jsonify(cache_suggestions[query])
     else:
         suggestions = utils.get_subreddit_suggestions(query)
-        print(cache_suggestions)
         cache_suggestions[query] = suggestions
         utils.save_cache_to_file(cache_suggestions, cache_suggestions_FILE)
         return jsonify(suggestions)

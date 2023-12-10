@@ -4,7 +4,7 @@ import dotenv
 import praw
 import requests
 import pickle
-from cachetools import TTLCache
+from cachetools import Cache
 
 # Load environment variables
 dotenv.load_dotenv()
@@ -114,5 +114,5 @@ def load_cache_from_file(filepath):
         with open(filepath, 'rb') as file:
             return pickle.load(file)
     except (FileNotFoundError, EOFError, pickle.UnpicklingError):
-        # Cache upto 1000 items, each for 5 minutes
-        return TTLCache(maxsize=1000, ttl=300)
+        # Cache upto 10000 items
+        return Cache(maxsize=10000)
