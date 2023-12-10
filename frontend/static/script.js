@@ -3,6 +3,7 @@ window.onload = function () {
     fetchFilteredPosts();
 };
 
+
 document.addEventListener('DOMContentLoaded', function () {
     const input = document.getElementById('subredditInput');
     const suggestionsContainer = document.getElementById('suggestions');
@@ -46,7 +47,8 @@ function fetchFilteredPosts() {
     }
 
     const emotion = document.getElementById('categoryDropdown').value;
-    fetch(`/api/posts?subreddit=${subreddit}&emotion=${emotion}`)
+    const numPosts = document.getElementById('numPosts').value;
+    fetch(`/api/posts?subreddit=${subreddit}&emotion=${emotion}&num_posts=${numPosts}`)
         .then(response => response.json())
         .then(data => {
             const postsSection = document.getElementById('posts');

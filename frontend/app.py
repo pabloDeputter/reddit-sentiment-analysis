@@ -45,10 +45,12 @@ def get_posts():
     Returns a list of posts from the specified subreddit.
     subreddit: subreddit name
     emotion: emotion name
+    num_posts: number of posts to return
     """
     subreddit = request.args.get('subreddit', 'all')
     emotion = request.args.get('emotion', 'all')
-    posts = utils.get_dataset(subreddit, 10)
+    num_posts = request.args.get('num_posts', 10)
+    posts = utils.get_dataset(subreddit, int(num_posts))
 
     pred_texts = [post['content'] for post in posts]
     # Tokenize texts and create prediction data set
