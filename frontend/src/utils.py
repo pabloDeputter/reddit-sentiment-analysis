@@ -11,9 +11,16 @@ dotenv.load_dotenv()
 
 
 def get_dataset(subreddit, limit):
-    assert subreddit != ''
-    # Set up PRAW with your credentials
+    """
+    Returns a list of posts from the specified subreddit.
 
+    :param subreddit: subreddit name
+    :param limit: number of posts to return
+
+    :return: list of posts
+    """
+    assert subreddit != ''
+    # Set up PRAW
     reddit = praw.Reddit(client_id=os.getenv('CLIENT_ID'), client_secret=os.getenv('CLIENT_SECRET'),
                          user_agent=os.getenv('USER_AGENT'), username=os.getenv('PRAW_USERNAME'),
                          password=os.getenv('PASSWORD'))
@@ -21,13 +28,12 @@ def get_dataset(subreddit, limit):
     # Choose the subreddit
     for _ in range(10):
         try:
-            subreddit = reddit.subreddit(subreddit)  # Replace 'subreddit_name' with your target subreddit
+            subreddit = reddit.subreddit(subreddit)
             break
         except ValueError as e:
             print(e)
             time.sleep(0.1)
             pass  # some weird error sometimes occurs
-            # ValueError: An invalid value was specified for display_name. Check that the argument for the display_name parameter is not empty.
 
     # Fetch the top 10 hot posts
     dataset = []
@@ -82,18 +88,28 @@ def get_subreddit_suggestions(query: str):
     :return: list of subreddit suggestions
     """
     token = get_reddit_token()
-    reddit = praw.Reddit(client_id=os.environ['CLIENT_ID'],
-                         client_secret=os.environ['CLIENT_SECRET'],
-                         user_agent=os.environ['USER_AGENT'],
-                         username=os.environ['USERNAME'],
-                         password=os.environ['PASSWORD'])
+    headers = {
+        'Authorization': f'bearer {token}',
+        'User-Agent': os.environ['USER_AGENT']
+    }
 
+    response = requests.get(f"https://oauth.reddit.com/subreddits/search?q={query}", headers=headers)
     subreddits = []
-    for subreddit in reddit.subreddits.search_by_name(query, include_nsfw=False):
-        if not subreddit.over18:
-            subreddits.append(subreddit.display_name)
-
-    return subreddits
+    if response.status_code == 200:
+        data = response.json()
+        # for subreddit in reddit.subreddits.search_by_name(query, include_nsfw=False):
+        #     if not subreddit.over18:
+        #         subreddits.append(subreddit.display_name)
+        for subreddit in data['data']['children']:
+            if not subreddit['data']['over18']:
+                subreddits.append(subreddit['data']['display_name'])
+        return subreddits
+    elif response.status_code == 429:
+        # Handle rate limiting
+        pass
+    else:
+        # Handle other errors
+        pass
 
 
 def save_cache_to_file(cache, filepath):

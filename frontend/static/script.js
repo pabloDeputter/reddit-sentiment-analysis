@@ -61,7 +61,6 @@ function fetchFilteredPosts() {
                 // Retrieve and process data
                 const emotions = JSON.parse(post.emotion);
 
-
                 // Sort and take top 3 emotions
                 let topEmotions = [...emotions];
                 topEmotions = topEmotions.sort((a, b) => b.score - a.score);
@@ -73,8 +72,17 @@ function fetchFilteredPosts() {
                     <div class="post-content">
                         <h2>${post.title}</h2>
                         <p>${post.content}</p>
-                        <p id="top-emotions" class="top-emotions">${topEmotionsText}</p>
-                        ${emotion === 'all' ? '' : `<p class="top-emotions">${emotion}: ${emotions.find(item => item.label === emotion).score.toFixed(3)}</p>`}
+                        <div class="post-info">
+                            <div class="emotion-container">
+                                <labe class="emotion-label">TOP EMOTIONS</label>
+                                <p id="top-emotions" class="top-emotions">${topEmotionsText}</p>
+                            </div>
+                            ${emotion === 'all' ? '' : `
+                            <div class="emotion-container">
+                                <label class="emotion-label">${emotion.toUpperCase()}</label>
+                                 <p class="top-emotions">${emotions.find(item => item.label === emotion).score.toFixed(4)}</p>
+                           </div>`}
+                        </div>
                     </div>
                     <div class="divider"/>
                 `;

@@ -187,7 +187,22 @@ button:hover {
 /* Style for the emotions and scores */
 .top-emotions {
     font-weight: bold; /* Make the top emotions stand out */
-    margin-bottom: 15px; /* Space before the chart */
+    font-size: medium;
+    color: black;
+    margin-top: -2px;
+}
+
+.emotion-label {
+    font-size: small;
+    color: #484848;
+}
+
+.emotion-container {
+    padding: 5px;
+    border-radius: 10px;
+    background-color: #ececec;
+    width: auto;
+    margin-bottom: 10px;
 }
 
 

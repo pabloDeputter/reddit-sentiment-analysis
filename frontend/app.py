@@ -46,10 +46,13 @@ def get_posts():
     subreddit: subreddit name
     emotion: emotion name
     num_posts: number of posts to return
+    query: query parameter
     """
     subreddit = request.args.get('subreddit', 'all')
     emotion = request.args.get('emotion', 'all')
     num_posts = request.args.get('num_posts', 10)
+    query = request.args.get('query', '')
+
     posts = utils.get_dataset(subreddit, int(num_posts))
 
     pred_texts = [post['content'] for post in posts]
@@ -88,31 +91,6 @@ def get_posts():
         post['emotion'] = json.dumps(emotion_scores)
 
     return jsonify({'posts': list(posts)})
-
-
-@app.route('/api/posts/<string:query>')
-def get_new_posts(query):
-    category = request.args.get('subreddit', 'all')
-
-    posts = utils.get_dataset(category, 10)
-
-    pred_texts = [post['content'] for post in posts]
-    # Tokenize texts and create prediction data set
-    tokenized_texts = tokenizer(pred_texts, truncation=True, padding=True)
-    pred_dataset = Posts(tokenized_texts)
-
-    # Run predictions
-    predictions = trainer.predict(pred_dataset)
-
-    # scores raw
-    temp = (np.exp(predictions[0]) / np.exp(predictions[0]).sum(-1, keepdims=True))
-
-    result = [[{'label': label, 'score': float(score)} for label, score in zip(model.config.id2label.values(), scores)]
-              for scores in temp]
-
-    for post, res in zip(posts, result):
-        post['emotion'] = json.dumps([res])
-    return jsonify({'posts': posts})
 
 
 @app.route('/api/subreddits', methods=['GET'])
