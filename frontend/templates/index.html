@@ -20,13 +20,14 @@
         <label for="subredditInput">Enter a subreddit:</label>
         <div class="input-wrapper">
             <input class="search-input" type="text" id="subredditInput" name="subreddit"
-                   placeholder="e.g., unpopularopinion">
+                   placeholder="e.g., unpopularopinion" required>
             <div id="suggestions" class="suggestions-container"></div>
         </div>
+
     </div>
 
     <div class="selector-container">
-        <label for="categoryDropdown">Choose a category:</label>
+        <label for="categoryDropdown">Choose an emotion:</label>
         <select id="categoryDropdown" name="category">
             <option value="all">All</option>
             <option value="admiration">Admiration</option>
@@ -59,6 +60,7 @@
             <option value="neutral">Neutral</option>
         </select>
     </div>
+    <input type="number" id="numPosts" name="quantity" value="10" min="1" max="50" class="quantity-input">
 
     <button type="button" onclick="fetchFilteredPosts()">Submit</button>
 </form>

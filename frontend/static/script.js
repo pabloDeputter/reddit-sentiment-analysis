@@ -3,6 +3,7 @@ window.onload = function () {
     fetchFilteredPosts();
 };
 
+
 document.addEventListener('DOMContentLoaded', function () {
     const input = document.getElementById('subredditInput');
     const suggestionsContainer = document.getElementById('suggestions');
@@ -18,10 +19,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            fetch(`/api/subreddits?query=${encodeURIComponent(query)}`)
+            fetch(`/api/subreddits?query=${encodeURIComponent(query)}}`)
                 .then(response => response.json())
                 .then(data => {
-                    console.log(data);
                     suggestionsContainer.innerHTML = '';
                     data.forEach(subreddit => {
                         const div = document.createElement('div');
@@ -40,52 +40,15 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 
-function createSentimentChart(data) {
-    // Calculate the max score for scaling purposes
-    const maxScore = Math.max(...data.map(d => d.score));
-
-    // Create an SVG element
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('width', '2000');
-    svg.setAttribute('height', '200');
-
-
-    data.forEach((d, i) => {
-        // Create a group for each bar to hold the rect and text
-        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-
-        // Create the rectangle for the bar
-        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        const barHeight = (d.score / maxScore) * 200; // Scale the bar height to the SVG height
-        rect.setAttribute('width', '40');
-        rect.setAttribute('height', barHeight);
-        rect.setAttribute('x', i * 50 + 30); // 50 units apart, plus 30 units from the left edge
-        rect.setAttribute('y', 200 - barHeight); // SVG y starts at the top
-        rect.setAttribute('fill', 'teal');
-
-        // Create the text label
-        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.textContent = d.label;
-        text.setAttribute('x', i * 50 + 50); // Center the text under the bar
-        text.setAttribute('y', 195); // Just above the bottom of the SVG
-        text.setAttribute('font-size', '10');
-        text.setAttribute('text-anchor', 'middle');
-
-        // Append the rect and text to the group
-        group.appendChild(rect);
-        group.appendChild(text);
-
-        // Append the group to the SVG
-        svg.appendChild(group);
-    });
-
-    return svg;
-}
-
 function fetchFilteredPosts() {
-    const subreddit = document.getElementById('subredditInput').value;
-    const category = document.getElementById('categoryDropdown').value;
-    fetch(`/api/posts?subreddit=${subreddit}&category=${category}`)
+    let subreddit = document.getElementById('subredditInput').value;
+    if (subreddit === '') {
+        subreddit = 'unpopularopinion'
+    }
+
+    const emotion = document.getElementById('categoryDropdown').value;
+    const numPosts = document.getElementById('numPosts').value;
+    fetch(`/api/posts?subreddit=${subreddit}&emotion=${emotion}&num_posts=${numPosts}`)
         .then(response => response.json())
         .then(data => {
             const postsSection = document.getElementById('posts');
@@ -94,45 +57,70 @@ function fetchFilteredPosts() {
                 const postElement = document.createElement('article');
                 const chartId = `emotionChart-${index}`; // Unique ID for each chart
                 postElement.className = 'post';
+
+                // Retrieve and process data
+                const emotions = JSON.parse(post.emotion);
+
+                // Sort and take top 3 emotions
+                let topEmotions = [...emotions];
+                topEmotions = topEmotions.sort((a, b) => b.score - a.score);
+                topEmotions = topEmotions.slice(0, 3);
+
+                // Create top emotions text
+                const topEmotionsText = topEmotions.map(e => e.score ? `${e.label}: ${e.score.toFixed(3)}` : `${e.label}: N/A`).join(', ');
                 postElement.innerHTML = `
-                    <h2>${post.title}</h2>
-                    <p>${post.content}</p>
-                    <p id="top-emotions" class="top-emotions"></p>
-                    <div style="width: 70%; margin: auto;"><canvas id="${chartId}"></canvas></div>
+                    <div class="post-content">
+                        <h2>${post.title}</h2>
+                        <p>${post.content}</p>
+                        <div class="post-info">
+                            <div class="emotion-container">
+                                <labe class="emotion-label">TOP EMOTIONS</label>
+                                <p id="top-emotions" class="top-emotions">${topEmotionsText}</p>
+                            </div>
+                            ${emotion === 'all' ? '' : `
+                            <div class="emotion-container">
+                                <label class="emotion-label">${emotion.toUpperCase()}</label>
+                                 <p class="top-emotions">${emotions.find(item => item.label === emotion).score.toFixed(4)}</p>
+                           </div>`}
+                        </div>
+                    </div>
+                    <div class="divider"/>
                 `;
                 postsSection.appendChild(postElement);
 
-                // Retrieve and process data
-                const emotions = JSON.parse(post.emotion)[0];
-                // Sort and take top 3 emotions
-                let topEmotions = [...emotions];
-                topEmotions.sort((a, b) => b.score - a.score);
-                topEmotions = topEmotions.slice(0, 3);
-
-                const labels = topEmotions.map(item => item.label);
-                const scores = topEmotions.map(item => item.score);
-
-                // Create top emotions text
-                const topEmotionsText = topEmotions.map(e => e.score ? `${e.label}: ${e.score.toFixed(2)}` : `${e.label}: N/A`).join(', ');
-
-                // Add top emotions to post
-                const topEmotionsElement = document.getElementById('top-emotions')
-                // change it
-                topEmotionsElement.textContent = `Top Emotions: ${topEmotionsText}`;
-
-                // const emotionsTextElement = document.createElement('p');
-                // emotionsTextElement.className = 'top-emotions';
-                // emotionsTextElement.textContent = `Top Emotions: ${topEmotionsText}`;
-                // postElement.appendChild(emotionsTextElement);
 
                 const colors = ['#FF6384', '#36A2EB', '#d30008', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#7ACB80', '#C2847A', '#FA8072', '#8A2BE2', '#5F9EA0', '#FF4500', '#2E8B57', '#D2691E', '#FFD700', '#DC143C', '#00FFFF', '#00008B', '#008B8B', '#B8860B', '#b548d7', '#006400', '#BDB76B', '#8B008B', '#556B2F', '#FF8C00', '#818181'];
 
+                // // Inside your data processing loop
+                // const voteCountElement = document.createElement('div');
+                // voteCountElement.className = 'vote-count';
+                //
+                // // Replace these with actual data from your API
+                // const upvotes = 123;
+                // const downvotes = 45;
+                //
+                // voteCountElement.innerHTML = `
+                // <span class="upvote"><i class="fa fa-arrow-up"></i> ${upvotes}</span>
+                // <span class="downvote"><i class="fa fa-arrow-down"></i> ${downvotes}</span>`;
+                //
+                // postElement.appendChild(voteCountElement);
+
                 // Create chart
+                const chartWrapper = document.createElement('div');
+                chartWrapper.className = 'chart-wrapper';
+                chartWrapper.innerHTML = `<div style="" class="chart-container"><canvas id="${chartId}"></canvas></div>`;
+                postElement.appendChild(chartWrapper);
+
+
+                // const chartContainer = document.createElement('div');
+                // chartContainer.className = 'chart-container';
+                // chartContainer.innerHTML = `<canvas id="${chartId}"></canvas>`;
+                // postElement.appendChild(chartContainer);
                 const ctx = document.getElementById(chartId).getContext('2d');
                 new Chart(ctx, {
                     type: 'pie', data: {
                         labels: emotions.map(item => item.label), datasets: [{
-                            label: 'Emotion Scores',
+                            label: 'Score',
                             data: emotions.map(item => item.score),
                             backgroundColor: colors.slice(0, emotions.map(item => item.label).length),
                             borderWidth: 1,
@@ -142,11 +130,18 @@ function fetchFilteredPosts() {
                     }, options: {
                         responsive: true, maintainAspectRatio: false, plugins: {
                             legend: {
-                                position: 'bottom', labels: {
-                                    boxWidth: 22, padding: 20
+                                display: true,
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    boxWidth: 10,
+                                    padding: 10,
+                                    fontSize: 10
                                 }
                             },
-                        }, layout: {
+                        },
+                        // aspectRatio: 1.5,
+                        layout: {
                             padding: {
                                 top: 15, bottom: 15, left: 15, right: 15
                             }
@@ -164,6 +159,5 @@ function fetchFilteredPosts() {
 const handleSubmit = (event) => {
     event.preventDefault();
     const searchValue = document.getElementById('search').value;
-    console.log('Submitted value:', searchValue);
     // Additional actions here
 }
