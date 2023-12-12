@@ -6,6 +6,7 @@ from torch.utils.data import Dataset
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer
 
 import src.utils as utils
+from tf_idf import ranked_retrieval
 
 dotenv.load_dotenv()
 
@@ -52,8 +53,28 @@ def get_posts():
     emotion = request.args.get('emotion', 'all')
     num_posts = request.args.get('num_posts', 10)
     query = request.args.get('query', '')
+    threshold = request.args.get('threshold', 0.5)
 
+    # Retrieve posts from specified subreddit
     posts = utils.get_dataset(subreddit, int(num_posts))
+
+    # Run TF-IDF
+    if query != '':
+        try:
+            ranked_posts = list(ranked_retrieval(posts, query, float(threshold)))
+        except ZeroDivisionError:
+            return jsonify({'error': 'ZeroDivisionError, please try again with other parameters.'}), 400
+
+        print(posts)
+        print(ranked_posts)
+        # Assign scores to posts, defaulting to 0
+        for index, score in ranked_posts:
+            posts[index]['score'] = score
+        for i in range(len(posts)):
+            if i not in [idx for idx, _ in ranked_posts]:
+                posts[index]['score'] = 0
+
+        return jsonify({'posts': json.dumps(posts)})
 
     pred_texts = [post['content'] for post in posts]
     # Tokenize texts and create prediction data set

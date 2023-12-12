@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            fetch(`/api/subreddits?query=${encodeURIComponent(query)}}`)
+            fetch(`/api/subreddits?query=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
                     suggestionsContainer.innerHTML = '';
@@ -48,8 +48,23 @@ function fetchFilteredPosts() {
 
     const emotion = document.getElementById('categoryDropdown').value;
     const numPosts = document.getElementById('numPosts').value;
-    fetch(`/api/posts?subreddit=${subreddit}&emotion=${emotion}&num_posts=${numPosts}`)
-        .then(response => response.json())
+    const query = document.getElementById('search-input').value;
+    const threshold = document.getElementById('threshold').value;
+
+    fetch(`/api/posts?subreddit=${encodeURIComponent(subreddit)}&emotion=${encodeURIComponent(emotion)}&num_posts=${encodeURIComponent(numPosts)}&threshold=${encodeURIComponent(threshold)}&query=${encodeURIComponent(query)}`)
+        .then(response => {
+            console.log(response.status)
+            if (response.status === 400) {
+                const postsSection = document.getElementById('posts');
+                postsSection.innerHTML = ''; // Clear out the current content
+                postsSection.innerHTML = 'Something went wrong. Please try again with other parameters.'
+                throw new Error('Something went wrong');
+            } else if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Something went wrong');
+            }
+        })
         .then(data => {
             const postsSection = document.getElementById('posts');
             postsSection.innerHTML = ''; // Clear out the current content

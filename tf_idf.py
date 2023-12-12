@@ -158,6 +158,7 @@ def compute_query_tf_idf(query, N, df):
         tf_idf_query[word] = tf * idf
     return tf_idf_query
 
+
 ######################
 # COSINE SIMILARITY
 ######################
@@ -214,5 +215,6 @@ def ranked_retrieval(dataset, query, threshhold):
     return filter(lambda x: x[1] > threshhold, result)
 
 
-dataset = get_dataset()
-ranked_retrieval(dataset, query, 0.5)
+if __name__ == "__main__":
+    dataset = get_dataset()
+    ranked_retrieval(dataset, query, 0.5)
