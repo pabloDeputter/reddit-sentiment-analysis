@@ -78,6 +78,9 @@ def preprocess(data):
     return data
 
 
+######################
+# INVERTED LIST
+######################
 def get_inverted_list(dataset):
     # Step 1: Tokenize the documents
     # Convert each document to lowercase and split it into words
@@ -117,7 +120,7 @@ def get_inverted_list(dataset):
 
 
 ######################
-# PUTTING IT ALL TOGETHER
+# TF-IDF
 ######################
 
 # Function to calculate TF-IDF
@@ -142,7 +145,7 @@ def compute_query_tf(query):
 def compute_query_tf_idf(query, N, df):
     """
     N is the total number of documents in your dataset.
-df is a dictionary where each key is a word and its value is the number of documents that contain that word.
+    df is a dictionary where each key is a word and its value is the number of documents that contain that word.
     :param query:
     :param N:
     :param df:
@@ -155,7 +158,9 @@ df is a dictionary where each key is a word and its value is the number of docum
         tf_idf_query[word] = tf * idf
     return tf_idf_query
 
-
+######################
+# COSINE SIMILARITY
+######################
 def cosine_similarity(query_tfidf, document_tfidf):
     similarities = {}
     for doc_id, vec in document_tfidf.items():
