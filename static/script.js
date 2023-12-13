@@ -66,9 +66,11 @@ function fetchFilteredPosts() {
             }
         })
         .then(data => {
+            console.log(data)
             const postsSection = document.getElementById('posts');
             postsSection.innerHTML = ''; // Clear out the current content
             data.posts.forEach((post, index) => {
+                console.log(post)
                 const postElement = document.createElement('article');
                 const chartId = `emotionChart-${index}`; // Unique ID for each chart
                 postElement.className = 'post';

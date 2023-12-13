@@ -65,16 +65,14 @@ def get_posts():
         except ZeroDivisionError:
             return jsonify({'error': 'ZeroDivisionError, please try again with other parameters.'}), 400
 
-        print(posts)
-        print(ranked_posts)
-        # Assign scores to posts, defaulting to 0
-        for index, score in ranked_posts:
-            posts[index]['score'] = score
-        for i in range(len(posts)):
-            if i not in [idx for idx, _ in ranked_posts]:
-                posts[index]['score'] = 0
+        # ranked_posts_dict = dict(ranked_posts)
+        # filtered_posts = []
+        # for index, post in enumerate(posts):
+        #     if index in ranked_posts_dict:
+        #         post['score'] = ranked_posts_dict[index]
+        #         filtered_posts.append(post)
 
-        return jsonify({'posts': json.dumps(posts)})
+        return jsonify({'posts': ranked_posts})
 
     pred_texts = [post['content'] for post in posts]
     # Tokenize texts and create prediction data set

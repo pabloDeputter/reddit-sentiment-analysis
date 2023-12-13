@@ -112,9 +112,9 @@ def get_inverted_list(dataset):
 
         inverted_index[term] = documents
 
-    # Step 3: Print the inverted index
-    for term, documents in inverted_index.items():
-        print(term, "->", documents)
+    # # Step 3: Print the inverted index
+    # for term, documents in inverted_index.items():
+    #     print(term, "->", documents)
 
     return inverted_index
 
@@ -126,20 +126,8 @@ def get_inverted_list(dataset):
 # Function to calculate TF-IDF
 def calculate_tf_idf(term, doc_id, document_dict):
     tf = document_dict[term].count(doc_id) / len(document_dict[term])
-    idf = log(len(document_dict) / len([1 for doc_ids in document_dict.values() if doc_id in doc_ids]))
-    tf_idf = tf * idf
-    return tf_idf
-
-
-def compute_query_tf(query):
-    words = query.split()
-    tf_query = {}
-    for word in words:
-        if word in tf_query:
-            tf_query[word] += 1
-        else:
-            tf_query[word] = 1
-    return tf_query
+    idf = log(len(document_dict) / (len([1 for doc_ids in document_dict.values() if doc_id in doc_ids]) + 1))
+    return tf * idf
 
 
 def compute_query_tf_idf(query, N, df):
