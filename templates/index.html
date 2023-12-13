@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<nav>
+    <ul>
+        <li><a class="nav-home" href="/">Reddit Sentiment Analyzer</a></li>
+        <li>
+
+        </li>
+        <!-- Add more navigation items here -->
+    </ul>
+</nav>
+
+<form id="filterForm" class="filter-form">
+    <div class="selector-container">
+        <label for="subredditInput">Enter a subreddit:</label>
+        <div class="input-wrapper">
+            <input class="search-input" type="text" id="subredditInput" name="subreddit"
+                   placeholder="e.g., unpopularopinion" required>
+            <div id="suggestions" class="suggestions-container"></div>
+        </div>
+
+    </div>
+
+    <div class="selector-container">
+        <label for="categoryDropdown">Choose an emotion:</label>
+        <select id="categoryDropdown" name="category">
+            <option value="all">All</option>
+            <option value="admiration">Admiration</option>
+            <option value="amusement">Amusement</option>
+            <option value="anger">Anger</option>
+            <option value="annoyance">Annoyance</option>
+            <option value="approval">Approval</option>
+            <option value="caring">Caring</option>
+            <option value="confusion">Confusion</option>
+            <option value="curiosity">Curiosity</option>
+            <option value="desire">Desire</option>
+            <option value="disappointment">Disappointment</option>
+            <option value="disapproval">Disapproval</option>
+            <option value="disgust">Disgust</option>
+            <option value="embarrassment">Embarrassment</option>
+            <option value="excitement">Excitement</option>
+            <option value="fear">Fear</option>
+            <option value="gratitude">Gratitude</option>
+            <option value="grief">Grief</option>
+            <option value="joy">Joy</option>
+            <option value="love">Love</option>
+            <option value="nervousness">Nervousness</option>
+            <option value="optimism">Optimism</option>
+            <option value="pride">Pride</option>
+            <option value="realization">Realization</option>
+            <option value="relief">Relief</option>
+            <option value="remorse">Remorse</option>
+            <option value="sadness">Sadness</option>
+            <option value="surprise">Surprise</option>
+            <option value="neutral">Neutral</option>
+        </select>
+    </div>
+    <div>
+        <div class="selector-container">
+            <label for="search-input">Search Query:</label>
+            <input id="search-input" class="search-input" type="text" placeholder="e.g., enforce better boundaries" autofocus required>
+        </div>
+        <div>
+            <label for="numPosts">Number of Posts:</label>
+            <input type="number" id="numPosts" name="quantity" value="30" min="1" max="50" class="quantity-input">
+        </div>
+        <div>
+            <label for="threshold">Threshold:</label>
+            <input type="number" id="threshold" name="threshold" value="0.5" min="0" max="1" step="0.1"
+                   class="quantity-input">
+        </div>
+    </div>
+
+    <button type="button" onclick="fetchFilteredPosts()">Submit</button>
+</form>
+
+<section id="posts">
+    <!-- The post list will be injected here by JavaScript -->
+</section>
+{% endblock %}
