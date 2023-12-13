@@ -1,87 +1,66 @@
-from tqdm import tqdm
-from transformers import BertTokenizer, BertForSequenceClassification
-from torch.utils.data import DataLoader, Dataset
-from torch.optim import AdamW
-import torch
 import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+from tqdm import tqdm
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from torch.utils.data import DataLoader, Dataset
+import torch
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print("Using device:", device)
+# Load DataFrame
+df = pd.read_pickle('merged_training.pkl')
 
-df = pd.read_pickle("merged_training.pkl")
+# Split DataFrame into features and labels
+X = df.drop('emotions', axis=1)
+y = df['emotions']
 
-# Map emotions to numeric labels
-label_dict = {label: index for index, label in enumerate(df['emotions'].unique())}
-df['labels'] = df['emotions'].replace(label_dict)
+# Split the data into train and test sets (10% for testing)
+_, X_test, _, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+
+# Load tokenizer and model
+model_name = "j-hartmann/emotion-english-distilroberta-base"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForSequenceClassification.from_pretrained(model_name)
+
+# Tokenize the test data
+tokenized_test = tokenizer(list(X_test['text']), padding=True, truncation=True, return_tensors="pt")
 
 
-# Custom dataset class
-class EmotionDataset(Dataset):
-    def __init__(self, dataframe, tokenizer):
-        self.len = len(dataframe)
-        self.data = dataframe
-        self.tokenizer = tokenizer
+# Create a PyTorch Dataset
+class TestDataset(Dataset):
+    def __init__(self, encodings):
+        self.encodings = encodings
 
-    def __getitem__(self, index):
-        # Make sure to access the text as a single string, not a Series
-        text = str(self.data.iloc[index]['text'])
-        label = self.data.iloc[index]['labels']
-        inputs = self.tokenizer.encode_plus(
-            text,
-            None,
-            add_special_tokens=True,
-            max_length=200,
-            pad_to_max_length=True,
-            return_token_type_ids=True
-        )
-        ids = inputs['input_ids']
-        mask = inputs['attention_mask']
-
-        return {
-            'ids': torch.tensor(ids, dtype=torch.long),
-            'mask': torch.tensor(mask, dtype=torch.long),
-            'labels': torch.tensor(label, dtype=torch.long)
-        }
+    def __getitem__(self, idx):
+        return {key: val[idx] for key, val in self.encodings.items()}
 
     def __len__(self):
-        return self.len
+        return len(self.encodings.input_ids)
 
 
+test_dataset = TestDataset(tokenized_test)
+test_loader = DataLoader(test_dataset, batch_size=128)  # Adjust batch size as needed
 
-# Load pre-trained model and tokenizer
-model_name = "bert-base-uncased"
-tokenizer = BertTokenizer.from_pretrained(model_name)
-model = BertForSequenceClassification.from_pretrained(model_name, num_labels=len(label_dict)).to(device)
+# Move model to GPU if available
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model.to(device)
 
-# Create dataset
-dataset = EmotionDataset(df, tokenizer)
-loader = DataLoader(dataset, batch_size=64)
-
-# Optimizer
-optimizer = AdamW(model.parameters(), lr=1e-5)
-
-# Fine-tuning loop
-for epoch in range(3):  # Number of training epochs
-    print(epoch)
-    for batch in tqdm(loader, total=6513):
-        # Extract inputs
-        ids = batch['ids'].to(device)
-        mask = batch['mask'].to(device)
-        labels = batch['labels'].to(device)
-
-        # Zero gradients
-        model.zero_grad()
-
-        # Forward pass
-        outputs = model(ids, attention_mask=mask, labels=labels)
-        loss = outputs.loss
+# Prediction
+model.eval()
+y_pred = []
+labels = list(model.config.id2label.values())
+with torch.no_grad():
+    for batch in tqdm(test_loader, total=len(test_loader)):
+        batch = {k: v.to(device) for k, v in batch.items()}
+        outputs = model(**batch)
         logits = outputs.logits
+        predictions = torch.argmax(logits, dim=-1)
+        y_pred.extend(map(lambda x: labels[x], predictions.cpu().numpy()))
 
-        # Backward pass
-        loss.backward()
+# Calculate metrics
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred, average='macro')  # Use 'binary' for binary classification
+recall = recall_score(y_test, y_pred, average='macro')  # Use 'binary' for binary classification
 
-        # Update parameters
-        optimizer.step()
-
-# Save the model
-model.to('cpu').save_pretrained("./my_finetuned_model")
+print(f'Accuracy: {accuracy}')
+print(f'Precision: {precision}')
+print(f'Recall: {recall}')

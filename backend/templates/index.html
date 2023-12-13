@@ -18,7 +18,7 @@
 <form id="filterForm" class="filter-form">
     <div class="selector-container">
         <label for="subredditInput">Enter a subreddit:</label>
-        <input class="search-input" type="text" id="subredditInput" name="subreddit" placeholder="e.g., unpopularopinion">
+        <input required class="search-input" type="text" id="subredditInput" name="subreddit" placeholder="e.g., unpopularopinion" >
     </div>
 
     <div class="selector-container">
@@ -35,7 +35,7 @@
         </select>
     </div>
 
-    <button type="button" onclick="fetchFilteredPosts()">Submit</button>
+    <button type="submit">Submit</button>
 </form>
 
 <section id="posts">
