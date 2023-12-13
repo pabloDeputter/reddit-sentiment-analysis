@@ -5,43 +5,8 @@ from nltk.stem import PorterStemmer
 
 from math import log
 import numpy as np
-
-######################
-# PARAMETERS
-######################
-CLIENT_ID = 'Ho0YiNH572NQcYCMcM3rGQ'
-CLIENT_SECRET = 'jLc5u4v3jH7O8ijnICUyMaPBDnG7qA'
-USER_AGENT = 'mozilla:com.example.sentiment-analysis:v1 (by u/def-not-bot-420)'
-USERNAME = 'def-not-bot-420'
-PASSWORD = 'IrIsCool69'
-
-SUBREDDIT = 'AITAH'
-LIMIT = 50
-
-alpha = 0.3
-query = "for telling my girlfriend she needs to enforce better boundaries with her daughter regarding entering our room"
-k = 10
-
-
-######################
-# DATASET
-######################
-def get_dataset():
-    # Set up PRAW with your credentials
-    reddit = praw.Reddit(client_id=CLIENT_ID,
-                         client_secret=CLIENT_SECRET,
-                         user_agent=USER_AGENT,
-                         username=USERNAME,
-                         password=PASSWORD)
-
-    # Choose the subreddit
-    subreddit = reddit.subreddit(SUBREDDIT)  # Replace 'subreddit_name' with your target subreddit
-
-    # Fetch the top 10 hot posts
-    dataset = []
-    for post in subreddit.hot(limit=LIMIT):
-        dataset.append({'title': post.title, 'content': post.selftext})
-    return dataset
+from src.utils import get_dataset
+from collections import Counter
 
 
 ######################
@@ -132,14 +97,12 @@ def calculate_tf_idf(term, doc_id, document_dict):
 
 def compute_query_tf_idf(query, N, df):
     """
-    N is the total number of documents in your dataset.
-    df is a dictionary where each key is a word and its value is the number of documents that contain that word.
-    :param query:
-    :param N:
-    :param df:
-    :return:
+    :param query: query string
+    :param N: the total number of documents in your dataset.
+    :param df: a dictionary where each key is a word and its value is the number of documents that contain that word.
+    :return: tf_idf
     """
-    tf_query = compute_query_tf(query)
+    tf_query = Counter(query)  # query tf
     tf_idf_query = {}
     for word, tf in tf_query.items():
         idf = log(N / df.get(word, N))  # Adding N in case the word is not in df
@@ -166,43 +129,52 @@ def cosine_similarity(query_tfidf, document_tfidf):
 
 
 # Function to rank documents based on a query
-def rank_documents(query, document_dict):
-    query_terms = query.split()
+def rank_documents(query, document_dict, N):
 
-    query_score = compute_query_tf_idf(query, LIMIT, {key: len(value) for key, value in document_dict.items()})
+    query_score = compute_query_tf_idf(query, N, {key: len(value) for key, value in document_dict.items()})
 
     # Calculate TF-IDF for each term in the query for each document
     document_scores = {}
-    for i, term in enumerate(query_terms):
-        for doc_id in range(0, LIMIT):  # Assuming documents are numbered from 1 to 9
+    for i, term in enumerate(query):
+        for doc_id in range(N):  # Assuming documents are numbered from 1 to 9
             if doc_id not in document_scores:
-                document_scores[doc_id] = np.zeros(len(query_terms))
+                document_scores[doc_id] = np.zeros(len(query))
             if term in document_dict:
                 document_scores[doc_id][i] = calculate_tf_idf(term, doc_id, document_dict)
 
     document_scores = cosine_similarity(np.array(list(query_score.values())), document_scores)
 
-    # Sort documents based on the total TF-IDF score
-    ranked_documents = sorted(document_scores.items(), key=lambda x: x[1], reverse=True)
-
-    return ranked_documents
+    return sorted(document_scores.items(), key=lambda x: x[1], reverse=True)
 
 
 def ranked_retrieval(dataset, query, threshhold):
+    query = preprocess(query)
     words_set = get_inverted_list(dataset)
     # print(words_set)
 
     # Rank documents based on the query
-    result = rank_documents(query, words_set)
+    result = rank_documents(query, words_set, len(dataset))
 
     # Print the ranked documents
     # print(f"Ranked Documents for Query '{query}':")
     # for doc_id, score in filter(lambda x: x[1] > threshhold, result):
     #     print(f"Document {doc_id}: {score}")
 
-    return filter(lambda x: x[1] > threshhold, result)
+    documents = []
+    for doc_id, score in result:
+        if score >= threshhold:
+            documents.append(dataset[doc_id])
+        break
+
+    return documents
 
 
 if __name__ == "__main__":
-    dataset = get_dataset()
+    SUBREDDIT = 'AITAH'
+    LIMIT = 50
+
+    query = "for telling my girlfriend she needs to enforce better boundaries with her daughter regarding entering our room"
+    k = 10
+
+    dataset = get_dataset(SUBREDDIT, LIMIT)
     ranked_retrieval(dataset, query, 0.5)
