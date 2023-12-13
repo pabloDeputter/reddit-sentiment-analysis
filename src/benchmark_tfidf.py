@@ -81,12 +81,10 @@ def ref_preprocess(data):
 newsgroups = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
 
 # Extract the documents and their corresponding labels
-documents = newsgroups.data[:100]
+documents = newsgroups.data[5000:5500]
 labels = newsgroups.target
 
 queries = ["computer hardware", "middle east conflict", "space exploration", "graphics", "university education",
-           "atheists", "god", "nasa", "orbit", "moon", "sun", "thanks", "religion", "christian", "bible", "jesus",
-           "windows", "software", "government", "interested", "medical advandes", "sports championships",
            "autmobile engineering"]
 
 # Run TF-IDF own implementation
@@ -124,9 +122,8 @@ def evaluate(your_ranked_documents, ref_ranked_documents):
     # Convert your ranked documents from [(index, score), ...] to [index, ...]
     your_ranked_indices = [doc[0] for doc in your_ranked_documents]
 
-    return calculate_ndcg(your_ranked_indices, ref_ranked_documents)
+    return calculate_ndcg(your_ranked_indices, ref_ranked_documents, k=10)
 
 
 average_ndcg = np.mean([evaluate(ranked_results_own[query], ranked_results_ref[query]) for query in queries])
 print(f'Average nDCG: {average_ndcg}')
-# Average nDCG: 0.01899946213775151
