@@ -61,18 +61,11 @@ def get_posts():
     # Run TF-IDF
     if query != '':
         try:
-            ranked_posts = list(ranked_retrieval(posts, query, float(threshold)))
+            posts = list(ranked_retrieval(posts, query, float(threshold)))
+            if not posts:
+                return jsonify({'posts': []})
         except ZeroDivisionError:
             return jsonify({'error': 'ZeroDivisionError, please try again with other parameters.'}), 400
-
-        # ranked_posts_dict = dict(ranked_posts)
-        # filtered_posts = []
-        # for index, post in enumerate(posts):
-        #     if index in ranked_posts_dict:
-        #         post['score'] = ranked_posts_dict[index]
-        #         filtered_posts.append(post)
-
-        return jsonify({'posts': ranked_posts})
 
     pred_texts = [post['content'] for post in posts]
     # Tokenize texts and create prediction data set
