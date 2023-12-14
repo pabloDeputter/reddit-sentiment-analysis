@@ -146,5 +146,7 @@ def combined_heatmap(df):
 if __name__ == '__main__':
     subreddits = ['offmychest', 'depression', 'relationship_advice', 'AITAH', 'antiwork', 'CasualConversation',
                   'confession']
-    combined_results = accumulate_results(subreddits)
+    combined_results: pd.DataFrame = accumulate_results(subreddits)
+    combined_results.to_json('combined_results.json')
+    print(combined_results)
     combined_heatmap(combined_results)

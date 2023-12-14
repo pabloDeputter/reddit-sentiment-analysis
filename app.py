@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer
 
 import src.utils as utils
-from tf_idf import ranked_retrieval
+from src.tf_idf import ranked_retrieval
 
 dotenv.load_dotenv()
 
