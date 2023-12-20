@@ -122,11 +122,31 @@ def analyse(subreddit, num_posts=1000):
     return calculate_average_scores(result)
 
 
+def accumulate_results(subreddits, num_posts=250):
+    all_results = pd.DataFrame()
+    for subreddit in subreddits:
+        results = analyse(subreddit, num_posts)
+        df = pd.DataFrame(list(results.items()), columns=['Emotion', subreddit]).set_index('Emotion')
+        all_results = pd.concat([all_results, df], axis=1)
+    return all_results
+
+
+def combined_heatmap(df):
+    plt.figure(figsize=(14, len(df.index) * 0.5))
+    sns.heatmap(df, annot=True, cmap="YlGnBu", fmt=".2f", annot_kws={"size": 10})
+    plt.xticks(rotation=45, ha='right', fontsize=10)
+    plt.yticks(rotation=0, fontsize=10)
+    plt.title('Average Emotion Scores Across Subreddits', fontsize=12)
+    plt.xlabel('Subreddits', fontsize=10)
+    plt.ylabel('Emotions', fontsize=10)
+    plt.tight_layout()
+    plt.show()
+
+
 if __name__ == '__main__':
-    subreddit = 'offmychest'
-    num_posts = 250
-    results = analyse(subreddit, num_posts)
-
-    barchart(results, subreddit, num_posts)
-    heatmap(results, subreddit, num_posts)
-
+    subreddits = ['offmychest', 'depression', 'relationship_advice', 'AITAH', 'antiwork', 'CasualConversation',
+                  'confession']
+    combined_results: pd.DataFrame = accumulate_results(subreddits)
+    combined_results.to_json('combined_results.json')
+    print(combined_results)
+    combined_heatmap(combined_results)

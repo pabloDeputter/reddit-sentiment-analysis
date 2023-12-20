@@ -37,6 +37,7 @@ def calculate_ndcg(your_ranks, ref_ranks, k=10):
 
 
 def tf_idf_implementation(dataset, queries):
+    N = len(dataset)
     # Step 1: Tokenize the documents
     # Convert each document to lowercase and split it into words
     duplicate_tokens = []
@@ -60,8 +61,9 @@ def tf_idf_implementation(dataset, queries):
 
     ranked_results = {}
     for query in tqdm(queries, desc="Ranking documents"):
+        preprocessed_query = tf_idf.preprocess(query)
         # Rank documents based on the query
-        ranked_documents = tf_idf.rank_documents(query, inverted_index)
+        ranked_documents = tf_idf.rank_documents(preprocessed_query, inverted_index, N)
         ranked_results[query] = ranked_documents
 
     return ranked_results
@@ -79,17 +81,15 @@ def ref_preprocess(data):
 newsgroups = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
 
 # Extract the documents and their corresponding labels
-documents = newsgroups.data[:2000]
+documents = newsgroups.data[5000:5500]
 labels = newsgroups.target
 
 queries = ["computer hardware", "middle east conflict", "space exploration", "graphics", "university education",
-           "atheists", "god", "nasa", "orbit", "moon", "sun", "thanks", "religion", "christian", "bible", "jesus",
-           "windows", "software", "government", "interested", "medical advandes", "sports championships",
            "autmobile engineering"]
 
 # Run TF-IDF own implementation
-# print("TF-IDF - own implementation")
-# ranked_results_own = tf_idf_implementation(documents, queries)
+print("TF-IDF - own implementation")
+ranked_results_own = tf_idf_implementation(documents, queries)
 
 # Run TF-IDF sklearn implementation
 print("TF-IDF - sklearn implementation")
@@ -122,9 +122,8 @@ def evaluate(your_ranked_documents, ref_ranked_documents):
     # Convert your ranked documents from [(index, score), ...] to [index, ...]
     your_ranked_indices = [doc[0] for doc in your_ranked_documents]
 
-    return calculate_ndcg(your_ranked_indices, ref_ranked_documents)
+    return calculate_ndcg(your_ranked_indices, ref_ranked_documents, k=10)
 
 
 average_ndcg = np.mean([evaluate(ranked_results_own[query], ranked_results_ref[query]) for query in queries])
 print(f'Average nDCG: {average_ndcg}')
-# Average nDCG: 0.01899946213775151

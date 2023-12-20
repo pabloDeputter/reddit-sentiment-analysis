@@ -66,11 +66,12 @@ function fetchFilteredPosts() {
             }
         })
         .then(data => {
-            console.log(data)
             const postsSection = document.getElementById('posts');
             postsSection.innerHTML = ''; // Clear out the current content
+            if (data.posts.length === 0) {
+                postsSection.innerHTML = 'No posts found. Please try again with other parameters.'
+            }
             data.posts.forEach((post, index) => {
-                console.log(post)
                 const postElement = document.createElement('article');
                 const chartId = `emotionChart-${index}`; // Unique ID for each chart
                 postElement.className = 'post';
@@ -147,17 +148,11 @@ function fetchFilteredPosts() {
                     }, options: {
                         responsive: true, maintainAspectRatio: false, plugins: {
                             legend: {
-                                display: true,
-                                position: 'bottom',
-                                labels: {
-                                    usePointStyle: true,
-                                    boxWidth: 10,
-                                    padding: 10,
-                                    fontSize: 10
+                                display: true, position: 'bottom', labels: {
+                                    usePointStyle: true, boxWidth: 10, padding: 10, fontSize: 10
                                 }
                             },
-                        },
-                        // aspectRatio: 1.5,
+                        }, // aspectRatio: 1.5,
                         layout: {
                             padding: {
                                 top: 15, bottom: 15, left: 15, right: 15
